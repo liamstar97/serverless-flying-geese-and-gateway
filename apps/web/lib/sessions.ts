@@ -7,8 +7,10 @@ import path from "node:path";
 import fs from "node:fs";
 
 import type { Persona } from "./personas";
+import { DATA_PATHS } from "./data-paths";
 
-const DB_PATH = process.env.SESSIONS_DB_PATH ?? "./data/sessions.db";
+// Single source of truth for where state lives; honors GLOOP_DATA_DIR on Fly.
+const DB_PATH = process.env.SESSIONS_DB_PATH ?? DATA_PATHS.sessions;
 
 let _db: Database.Database | null = null;
 
