@@ -16,6 +16,10 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 COPY apps/web/ ./
+# Bundle the upstream registry JSONs so lib/registry.ts can seed without
+# needing python or the vendored submodule at runtime.
+COPY vendor/agentgatewaygastown/examples/research-assistant-demo/gateway-configs/research_registry.json ./seeds/research_registry.json
+COPY vendor/agentgatewaygastown/examples/ecommerce-demo/gateway-configs/ecommerce_registry_v2.json ./seeds/ecommerce_registry_v2.json
 COPY --from=deps /app/node_modules ./node_modules
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
@@ -35,6 +39,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # below get hand-pulled).
 COPY --from=builder --chown=app:app /app/.next/standalone ./
 COPY --from=builder --chown=app:app /app/.next/static ./.next/static
+COPY --from=builder --chown=app:app /app/seeds ./seeds
 # (no public/ dir in this project — skip copying it)
 
 # better-sqlite3 is server-external, so the standalone bundle doesn't

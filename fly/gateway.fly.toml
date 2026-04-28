@@ -29,7 +29,7 @@ primary_region = "lax"
   protocol = "tcp"
   auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
 
 # Admin UI — internal-only by default. Comment back the [[services.ports]]
 # block if you want it reachable from outside the org.
@@ -38,7 +38,7 @@ primary_region = "lax"
   protocol = "tcp"
   auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
 
 [[vm]]
   cpu_kind = "shared"

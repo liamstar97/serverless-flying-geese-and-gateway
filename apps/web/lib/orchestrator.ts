@@ -25,7 +25,6 @@ const FLY_TOKEN = process.env.FLY_API_TOKEN ?? "";
 const FLY_GOOSE_APP = process.env.FLY_GOOSE_APP ?? "";
 const FLY_GOOSE_REGION = process.env.FLY_GOOSE_REGION ?? "sea";
 const FLY_GOOSE_IMAGE = process.env.FLY_GOOSE_IMAGE ?? "";
-const FLY_RECIPES_VOLUME = process.env.FLY_RECIPES_VOLUME ?? "";
 const GATEWAY_URL_INTERNAL = process.env.GATEWAY_URL ?? "http://gateway:3000";
 
 // ───────── shared util ─────────
@@ -216,14 +215,12 @@ async function flySpawn(
           },
         ],
         guest: { cpu_kind: "shared", cpus: 1, memory_mb: 1024 },
-        mounts: FLY_RECIPES_VOLUME
-          ? [
-              {
-                volume: FLY_RECIPES_VOLUME,
-                path: "/etc/goose-recipes",
-              },
-            ]
-          : undefined,
+        // Recipes for the 3 default personas are baked into the goose-runner
+        // image at /etc/goose-recipes/, so no volume mount is required.
+        // Live editing of personas via /personas/[id] needs a recipe-sync
+        // mechanism that's a separate follow-up — Fly Volumes can't be
+        // shared across apps, and the API expects volume IDs (UUIDs)
+        // anyway, so just naming a volume here returns 400.
         metadata: { persona, userId, sessionId },
       },
     },
