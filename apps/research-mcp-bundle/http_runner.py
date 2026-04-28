@@ -25,7 +25,10 @@ logger = logging.getLogger(__name__)
 def run_http_server(mcp: FastMCP, default_port: int = 8000):
     parser = argparse.ArgumentParser(description=f"Run {mcp.name} MCP Server")
     parser.add_argument("--port", type=int, default=default_port)
-    parser.add_argument("--host", type=str, default="0.0.0.0")
+    # Bind to "::" so we accept both IPv4 (Docker on macOS) and IPv6
+    # (Fly's 6PN private network — the only thing other Fly machines
+    # can reach us on). With "0.0.0.0" the gateway gets ECONNREFUSED.
+    parser.add_argument("--host", type=str, default="::")
     args = parser.parse_args()
 
     logging.basicConfig(

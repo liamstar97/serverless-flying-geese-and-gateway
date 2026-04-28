@@ -25,6 +25,12 @@ COPY vendor/agentgatewaygastown/examples/ecommerce-demo/mcp_tools ./mcp_tools
 # sys.path manipulation (parent.parent) still resolves to /app where mcp_tools/ is.
 COPY vendor/agentgatewaygastown/examples/ecommerce-demo/data/seed_data.py /app/scripts/seed_data.py
 
+# Each ecommerce service hard-codes host="0.0.0.0" in its FastMCP() call,
+# which is IPv4 only. Fly's 6PN is IPv6, so the gateway can't reach us.
+# Rewrite the bind to "::" (dual-stack) at build time. Local docker-compose
+# also keeps working since "::" accepts v4-mapped traffic on Linux.
+RUN find /app/mcp_tools -name 'server.py' -exec sed -i 's/host="0.0.0.0"/host="::"/g' {} +
+
 # Install only runtime deps for the MCP services. Skip the agent-side stuff
 # (google-adk, langgraph, langchain-*) — those run in goose machines, not here.
 RUN uv venv && \
