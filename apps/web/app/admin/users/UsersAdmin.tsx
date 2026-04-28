@@ -6,10 +6,10 @@ import { toast } from "sonner";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { GithubUserCombobox } from "@/components/GithubUserCombobox";
 
 import { addUserAction, removeUserAction, setRoleAction } from "./actions";
 
@@ -93,12 +93,9 @@ export function UsersAdmin({
           <Label className="text-sm">Invite a GitHub user</Label>
         </div>
         <div className="mt-3 grid grid-cols-[1fr,160px,auto] gap-2">
-          <Input
+          <GithubUserCombobox
             value={draftLogin}
-            onChange={(e) => setDraftLogin(e.target.value)}
-            placeholder="github-login"
-            onKeyDown={(e) => { if (e.key === "Enter") add(); }}
-            className="font-mono text-sm"
+            onChange={setDraftLogin}
           />
           <Select value={draftRole} onValueChange={(v) => setDraftRole(v as Role)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
@@ -110,7 +107,7 @@ export function UsersAdmin({
           <Button onClick={add} disabled={pending || !draftLogin.trim()}>add</Button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          GitHub login (case-insensitive). Saved to <code className="font-mono">data/sessions.db users</code>.
+          Searches GitHub as you type. Hit ↵ on the picker to fill the field, then add.
         </p>
       </Card>
 
