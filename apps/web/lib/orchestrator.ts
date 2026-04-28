@@ -36,7 +36,7 @@ async function dockerExists(containerId: string): Promise<boolean> {
 
 async function dockerSpawn(persona: Persona): Promise<{ containerId: string; hostPort: number }> {
   if (!ANTHROPIC_KEY) {
-    throw new Error("ANTHROPIC_API_KEY not set in web app environment");
+    throw new Error("ANTHROPIC_API_KEY not set in apps/web/.env.local");
   }
   const env = [
     "-e", `ANTHROPIC_API_KEY=${ANTHROPIC_KEY}`,
@@ -44,6 +44,7 @@ async function dockerSpawn(persona: Persona): Promise<{ containerId: string; hos
     "-e", "GOOSE_MODEL=claude-sonnet-4-6",
     "-e", `GOOSE_RECIPE=${persona}`,
   ];
+  console.log(`[orchestrator] docker run --network=${NETWORK} ${IMAGE} (persona=${persona})`);
   const { stdout, stderr, code } = await exec("docker", [
     "run", "-d", "--rm",
     "--network", NETWORK,
@@ -55,14 +56,17 @@ async function dockerSpawn(persona: Persona): Promise<{ containerId: string; hos
     throw new Error(`docker run failed: ${stderr.trim() || stdout.trim()}`);
   }
   const containerId = stdout.trim();
+  console.log(`[orchestrator] spawned container ${containerId.slice(0, 12)}`);
+
   const portRes = await exec("docker", ["port", containerId, "8000/tcp"]);
   if (portRes.code !== 0) {
     throw new Error(`docker port failed: ${portRes.stderr.trim()}`);
   }
-  // `docker port` output: "0.0.0.0:55432\n[::]:55432\n" — grab the first port.
   const m = portRes.stdout.match(/:(\d+)/);
   if (!m) throw new Error(`could not parse host port from: ${portRes.stdout}`);
-  return { containerId, hostPort: parseInt(m[1], 10) };
+  const hostPort = parseInt(m[1], 10);
+  console.log(`[orchestrator] container ${containerId.slice(0, 12)} -> host port ${hostPort}`);
+  return { containerId, hostPort };
 }
 
 export async function getOrSpawnGoose(

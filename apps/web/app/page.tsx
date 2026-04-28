@@ -26,20 +26,19 @@ export default async function HomePage() {
         </form>
       ) : (
         <>
-          <p style={{ marginTop: "2rem" }}>
-            Signed in as <strong>{session.user.name ?? session.user.email}</strong>{" "}
+          <div style={{ marginTop: "2rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <span>
+              Signed in as <strong>{session.user.name ?? session.user.email}</strong>
+            </span>
             <form
               action={async () => {
                 "use server";
                 await signOut();
               }}
-              style={{ display: "inline" }}
             >
-              <button type="submit" style={{ marginLeft: "0.5rem" }}>
-                Sign out
-              </button>
+              <button type="submit">Sign out</button>
             </form>
-          </p>
+          </div>
 
           <ul style={{ listStyle: "none", padding: 0, marginTop: "2rem", display: "grid", gap: "0.75rem" }}>
             {PERSONAS.map((p) => (

@@ -48,49 +48,70 @@ export async function POST(
   try {
     wsUrl = await getOrSpawnGoose(userId, persona, sessionId);
   } catch (e) {
-    return new Response(`spawn failed: ${(e as Error).message}`, { status: 500 });
+    const msg = (e as Error).message;
+    console.error("[chat] orchestrator failed:", msg);
+    return new Response(`spawn failed: ${msg}`, { status: 500 });
   }
   touchSession(userId, persona, sessionId);
+
+  console.log(`[chat] opening WS to ${wsUrl} for user=${userId} persona=${persona}`);
 
   const stream = new ReadableStream({
     async start(controller) {
       const enc = new TextEncoder();
-      const sse = (line: string) => controller.enqueue(enc.encode(`data: ${line}\n\n`));
+      const sse = (line: string) => {
+        try {
+          controller.enqueue(enc.encode(`data: ${line}\n\n`));
+        } catch (e) {
+          console.error("[chat] enqueue failed:", (e as Error).message);
+        }
+      };
 
       let ws: WebSocket;
       try {
         ws = new WebSocket(wsUrl);
       } catch (e) {
+        console.error("[chat] WS construct failed:", (e as Error).message);
         sse(JSON.stringify({ event: "error", error: (e as Error).message }));
         controller.close();
         return;
       }
 
-      const close = () => {
+      let closed = false;
+      const close = (why: string) => {
+        if (closed) return;
+        closed = true;
+        console.log(`[chat] closing (${why})`);
         try { ws.close(); } catch {}
         try { controller.close(); } catch {}
       };
 
       ws.on("open", () => {
+        console.log("[chat] WS open, sending message");
         ws.send(JSON.stringify({ message }));
       });
       ws.on("message", (raw) => {
         const line = raw.toString();
         sse(line);
-        // goose-runner sends a synthetic done event when goose exits.
         try {
           const ev = JSON.parse(line);
-          if (ev?.event === "done") close();
-        } catch { /* line is goose stream-json, not our wrapper event */ }
+          if (ev?.event === "done") close("done event");
+        } catch { /* goose stream-json frame, not our wrapper sentinel */ }
       });
       ws.on("error", (err) => {
+        console.error("[chat] WS error:", (err as NodeJS.ErrnoException).code ?? "", err.message);
         sse(JSON.stringify({ event: "error", error: err.message }));
-        close();
+        close("ws error");
       });
-      ws.on("close", close);
+      ws.on("close", (code, reason) => {
+        console.log(`[chat] WS closed code=${code} reason=${reason?.toString() || ""}`);
+        close("ws close");
+      });
 
-      // Best-effort: drop the WS if the client disconnects.
-      req.signal.addEventListener("abort", close);
+      req.signal.addEventListener("abort", () => {
+        console.log("[chat] request aborted by client");
+        close("client abort");
+      });
     },
   });
 

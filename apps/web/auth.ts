@@ -6,6 +6,11 @@ import GitHub from "next-auth/providers/github";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [GitHub],
   session: { strategy: "jwt" },
+  // Required for local-dev sign-in: without this, Auth.js can't agree on the
+  // base URL between the sign-in redirect and the OAuth callback, and the
+  // PKCE verifier cookie set on / can't be matched on /api/auth/callback/...
+  // On Vercel/Fly the platform sets the right host headers and this is no-op.
+  trustHost: true,
   callbacks: {
     async session({ session, token }) {
       if (session.user && token.sub) {
