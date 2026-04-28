@@ -1,0 +1,45 @@
+# Local-dev orchestration. Start with:  docker compose up gateway research-mcp-bundle
+#
+# After M2 the ecommerce-mcp-bundle service will be added here.
+# Goose machines are NEVER run via this compose file — they're spawned by the
+# web app (locally as docker containers via the orchestrator's LOCAL_GOOSE
+# code path; on Fly via the Machines API).
+
+services:
+  research-mcp-bundle:
+    build:
+      context: .
+      dockerfile: apps/research-mcp-bundle/Dockerfile
+    container_name: research-mcp-bundle
+    volumes:
+      - research-data:/data
+    expose:
+      - "8001"
+      - "8002"
+      - "8003"
+      - "8004"
+      - "8005"
+    # Only expose ports for direct debugging; the gateway is the public surface.
+    ports:
+      - "127.0.0.1:8001:8001"
+      - "127.0.0.1:8002:8002"
+      - "127.0.0.1:8003:8003"
+      - "127.0.0.1:8004:8004"
+      - "127.0.0.1:8005:8005"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/gateway/Dockerfile
+    container_name: gateway
+    environment:
+      RESEARCH_MCP_HOST: research-mcp-bundle
+      ECOMMERCE_MCP_HOST: ecommerce-mcp-bundle  # placeholder until M2
+      RUST_LOG: info
+    ports:
+      - "3000:3000"
+    depends_on:
+      - research-mcp-bundle
+
+volumes:
+  research-data:

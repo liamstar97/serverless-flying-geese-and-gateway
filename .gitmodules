@@ -1,0 +1,4 @@
+[submodule "vendor/agentgatewaygastown"]
+	path = vendor/agentgatewaygastown
+	url = https://github.com/jakemannix/agentgatewaygastown.git
+	branch = feature/tool-algebra-cleanup
