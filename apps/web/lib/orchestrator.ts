@@ -45,16 +45,23 @@ async function waitForHealthz(url: string, timeoutMs: number): Promise<void> {
   let lastErr = "no response yet";
   while (Date.now() < deadline) {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(1500) });
+      const res = await fetch(url, { signal: AbortSignal.timeout(2000) });
       if (res.ok) return;
       lastErr = `${res.status}`;
     } catch (e) {
       lastErr = (e as Error).message;
     }
-    await new Promise((r) => setTimeout(r, 250));
+    await new Promise((r) => setTimeout(r, 500));
   }
   throw new Error(`goose-runner not healthy within ${timeoutMs}ms: ${lastErr}`);
 }
+
+// Cold-start budget for a freshly-spawned Fly Machine. Image pull (first
+// time) + uvicorn + module imports comfortably runs > 30s on Fly's
+// shared-cpu, especially in regions where the goose-runner image isn't
+// yet cached. Be generous — this is the single biggest UX delay on the
+// first message after a long idle.
+const SPAWN_HEALTHZ_TIMEOUT_MS = 90_000;
 
 function safeName(s: string): string {
   return s.replace(/[^a-zA-Z0-9]/g, "-").slice(0, 24);
@@ -108,7 +115,7 @@ async function dockerSpawn(
   if (!m) throw new Error(`could not parse host port: ${portRes.stdout}`);
   const port = parseInt(m[1], 10);
 
-  await waitForHealthz(`http://localhost:${port}/healthz`, 30_000);
+  await waitForHealthz(`http://localhost:${port}/healthz`, SPAWN_HEALTHZ_TIMEOUT_MS);
   return { id, wsUrl: `ws://localhost:${port}/chat` };
 }
 
@@ -227,7 +234,10 @@ async function flySpawn(
   );
 
   const wsUrl = `ws://${machine.id}.vm.${FLY_GOOSE_APP}.internal:8000/chat`;
-  await waitForHealthz(`http://${machine.id}.vm.${FLY_GOOSE_APP}.internal:8000/healthz`, 30_000);
+  await waitForHealthz(
+    `http://${machine.id}.vm.${FLY_GOOSE_APP}.internal:8000/healthz`,
+    SPAWN_HEALTHZ_TIMEOUT_MS,
+  );
   return { id: machine.id, wsUrl };
 }
 
