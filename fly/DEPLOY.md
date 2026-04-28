@@ -1,6 +1,6 @@
 # Deploying to Fly
 
-Five Fly apps, all in `sea`:
+Five Fly apps, all in `lax`:
 
 | app                            | role                                | public? |
 |--------------------------------|-------------------------------------|---------|
@@ -31,19 +31,19 @@ fly auth login
 ```bash
 # Always invoke flyctl from the repo root so the build context is correct.
 
-# 1. Create + deploy the two MCP bundles. They get one Volume each, in sea.
+# 1. Create + deploy the two MCP bundles. They get one Volume each, in lax.
 fly apps create gloop-liam-research-mcp --org personal
-fly volumes create research_data -a gloop-liam-research-mcp -r sea -s 1
+fly volumes create research_data -a gloop-liam-research-mcp -r lax -s 1
 fly deploy -c fly/research-mcp-bundle.fly.toml --vm-memory 1024
 
 fly apps create gloop-liam-ecommerce-mcp --org personal
-fly volumes create ecommerce_data -a gloop-liam-ecommerce-mcp -r sea -s 1
+fly volumes create ecommerce_data -a gloop-liam-ecommerce-mcp -r lax -s 1
 fly deploy -c fly/ecommerce-mcp-bundle.fly.toml --vm-memory 1024
 
 # 2. Gateway. Volume holds the live registry (mounted into the web app
 #    too — same `gateway_registry` name, but each app has its own.)
 fly apps create gloop-liam-gateway --org personal
-fly volumes create gateway_registry -a gloop-liam-gateway -r sea -s 1
+fly volumes create gateway_registry -a gloop-liam-gateway -r lax -s 1
 fly deploy -c fly/gateway.fly.toml
 
 # 3. goose-runner. Build-only — we never run an instance from this app's
@@ -54,11 +54,11 @@ fly deploy -c fly/goose-runner.fly.toml --build-only --push
 GOOSE_IMAGE=$(fly image show -a gloop-liam-goose-runner --json | jq -r '.image_ref.digest')
 echo "$GOOSE_IMAGE"
 # Make a volume for shared recipes (ro-mounted into spawned machines):
-fly volumes create goose_recipes -a gloop-liam-goose-runner -r sea -s 1
+fly volumes create goose_recipes -a gloop-liam-goose-runner -r lax -s 1
 
 # 4. Web. Set secrets BEFORE first deploy so the build can finish.
 fly apps create gloop-liam-web --org personal
-fly volumes create web_data -a gloop-liam-web -r sea -s 1
+fly volumes create web_data -a gloop-liam-web -r lax -s 1
 fly secrets set -a gloop-liam-web \
   AUTH_SECRET="$(openssl rand -base64 32)" \
   AUTH_GITHUB_ID="<production OAuth client id>" \
@@ -113,7 +113,7 @@ fly apps destroy gloop-liam-research-mcp --yes
   from, or (c) inline the recipe into the GOOSE_RECIPE env var.
   M5+ task.
 - **Region pinning.** Both MCP bundles are stateful (SQLite on a Volume),
-  so they live in `sea` only. Web is also pinned to `sea` for now —
+  so they live in `lax` only. Web is also pinned to `sea` for now —
   multi-region with goose machines spawned in the user's nearest region
   is M5++.
 - **GitHub OAuth flow.** First deploy may 500 the callback if the OAuth

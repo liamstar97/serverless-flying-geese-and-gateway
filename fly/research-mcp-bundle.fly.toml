@@ -5,7 +5,7 @@
 #                    --dockerfile apps/research-mcp-bundle/Dockerfile
 
 app = "gloop-liam-research-mcp"
-primary_region = "sea"
+primary_region = "lax"
 
 [build]
   dockerfile = "apps/research-mcp-bundle/Dockerfile"

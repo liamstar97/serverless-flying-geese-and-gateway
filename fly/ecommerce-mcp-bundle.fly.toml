@@ -1,7 +1,7 @@
 # Ecommerce MCP services bundled into one app. Same shape as research.
 
 app = "gloop-liam-ecommerce-mcp"
-primary_region = "sea"
+primary_region = "lax"
 
 [build]
   dockerfile = "apps/ecommerce-mcp-bundle/Dockerfile"

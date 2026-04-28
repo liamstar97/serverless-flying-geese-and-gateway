@@ -4,7 +4,7 @@
 # (TODO M5+: optional public route guarded by Auth.js).
 
 app = "gloop-liam-gateway"
-primary_region = "sea"
+primary_region = "lax"
 
 [build]
   dockerfile = "apps/gateway/Dockerfile"

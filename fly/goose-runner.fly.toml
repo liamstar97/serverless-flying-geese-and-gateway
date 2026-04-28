@@ -8,7 +8,7 @@
 # by digest when spawning machines.
 
 app = "gloop-liam-goose-runner"
-primary_region = "sea"
+primary_region = "lax"
 
 [build]
   dockerfile = "apps/goose-runner/Dockerfile"

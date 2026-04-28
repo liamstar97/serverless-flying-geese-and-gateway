@@ -1,7 +1,7 @@
 # Next.js front door. Owns the Machines API orchestrator + auth.
 
 app = "gloop-liam-web"
-primary_region = "sea"
+primary_region = "lax"
 
 [build]
   dockerfile = "apps/web/Dockerfile"
@@ -23,7 +23,7 @@ primary_region = "sea"
   GATEWAY_INTERNAL_URL = "http://gloop-liam-gateway.internal:3000"
   GATEWAY_ADMIN_URL = "http://gloop-liam-gateway.internal:15000/ui"
   FLY_GOOSE_APP = "gloop-liam-goose-runner"
-  FLY_GOOSE_REGION = "sea"
+  FLY_GOOSE_REGION = "lax"
 
 [[services]]
   internal_port = 3001
