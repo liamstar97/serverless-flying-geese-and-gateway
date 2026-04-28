@@ -1,0 +1,48 @@
+version: "1.0.0"
+title: "Research Goose"
+description: "Research assistant scoped to the research-domain virtual tools on agentgateway."
+
+# `prompt` is the user-facing turn; `--params user_message=...` is substituted
+# at run time by the wrapper. `instructions` is the system prompt.
+parameters:
+  - key: user_message
+    input_type: string
+    requirement: required
+    description: "The user's chat message for this turn"
+
+prompt: "{{ user_message }}"
+
+instructions: |
+  You are a research assistant. You can search across the web (Exa), arXiv,
+  GitHub, and HuggingFace, fetch and extract URLs, and store findings in a
+  small knowledge graph.
+
+  Prefer the composed virtual_* tools over raw backends — they normalize
+  results across sources. Cite URLs when summarizing.
+
+extensions:
+  - type: streamable_http
+    name: agentgateway
+    uri: http://gateway:3000/mcp
+    timeout: 60
+    description: "Research-domain virtual tools merged on agentgateway"
+    available_tools:
+      # Compositions
+      - virtual_research_and_fetch
+      - virtual_multi_source_search
+      - virtual_academic_search
+      - virtual_code_search
+      # Normalizers
+      - virtual_web_research
+      - virtual_normalized_arxiv
+      - virtual_normalized_github
+      - virtual_normalized_huggingface
+      # Pipelines
+      - virtual_fetch_and_extract
+      - virtual_explore_entity_network
+      - virtual_get_knowledge_for_topic
+      # Forwarding / KG writes
+      - virtual_store_research_finding
+      - virtual_link_entities
+      - virtual_find_or_create_category
+      - virtual_browse_taxonomy

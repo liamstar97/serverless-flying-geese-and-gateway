@@ -63,6 +63,26 @@ services:
       - research-mcp-bundle
       - ecommerce-mcp-bundle
 
+  # M3: a goose-runner brought up alongside compose for local validation.
+  # In production this image is NOT compose-managed — the web app spawns it
+  # per chat session via the Fly Machines API. Bring it up explicitly:
+  #   docker compose --profile goose up
+  goose-runner:
+    build:
+      context: .
+      dockerfile: apps/goose-runner/Dockerfile
+    container_name: goose-runner
+    profiles: ["goose"]
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GOOSE_PROVIDER: anthropic
+      GOOSE_MODEL: claude-sonnet-4-6
+      GOOSE_RECIPE: research
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      - gateway
+
 volumes:
   research-data:
   ecommerce-data:
