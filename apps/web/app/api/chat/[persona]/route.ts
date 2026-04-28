@@ -21,7 +21,26 @@ export const dynamic = "force-dynamic";
 const Body = z.object({
   sessionId: z.string().min(8),
   message: z.string().min(1),
+  history: z
+    .array(z.object({ role: z.enum(["user", "assistant"]), text: z.string() }))
+    .optional()
+    .default([]),
 });
+
+/**
+ * Goose runs with --no-session, so each invocation is a clean conversation.
+ * To preserve continuity we splice the prior turns the browser kept in
+ * localStorage into the prompt itself. The cost is tokens; the win is
+ * "go back to a tab and the agent still knows what we were talking about".
+ */
+function withHistory(
+  message: string,
+  history: { role: "user" | "assistant"; text: string }[],
+): string {
+  if (history.length === 0) return message;
+  const lines = history.map((t) => `${t.role.toUpperCase()}: ${t.text}`).join("\n\n");
+  return `Conversation so far:\n\n${lines}\n\n---\n\nUSER (now): ${message}`;
+}
 
 export async function POST(
   req: NextRequest,
@@ -42,7 +61,11 @@ export async function POST(
   if (!parsed.success) {
     return new Response(parsed.error.message, { status: 400 });
   }
-  const { sessionId, message } = parsed.data;
+  const { sessionId, history } = parsed.data;
+  // Cap how much history we splice in — at some point this is wasteful and
+  // confuses the model more than it helps. Keep the most recent turns.
+  const trimmed = history.slice(-12);
+  const message = withHistory(parsed.data.message, trimmed);
 
   let wsUrl: string;
   try {

@@ -21,9 +21,8 @@ type Bubble =
   | { kind: "tool_response"; id: string; result: unknown }
   | { kind: "error"; text: string };
 
-function sessionKey(persona: Persona): string {
-  return `gloop:sessionId:${persona}`;
-}
+const sessionKey = (persona: Persona) => `gloop:sessionId:${persona}`;
+const historyKey = (persona: Persona, sid: string) => `gloop:history:${persona}:${sid}`;
 
 function sessionIdFor(persona: Persona): string {
   if (typeof window === "undefined") return "ssr";
@@ -42,15 +41,60 @@ function newSessionFor(persona: Persona): string {
   return v;
 }
 
+function loadHistory(persona: Persona, sid: string): Bubble[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(historyKey(persona, sid));
+    return raw ? (JSON.parse(raw) as Bubble[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(persona: Persona, sid: string, bubbles: Bubble[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(historyKey(persona, sid), JSON.stringify(bubbles));
+  } catch {
+    // localStorage full / disabled — fail open.
+  }
+}
+
+function clearHistory(persona: Persona, sid: string): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(historyKey(persona, sid));
+}
+
+/** Trim the saved history to user/assistant text turns the agent can use as context. */
+function asTurns(bubbles: Bubble[]): { role: "user" | "assistant"; text: string }[] {
+  return bubbles
+    .filter((b) => (b.kind === "user" || b.kind === "assistant") && b.text.trim().length > 0)
+    .map((b) => ({ role: b.kind as "user" | "assistant", text: (b as { text: string }).text }));
+}
+
 export function ChatRoom({ persona, accentColor }: { persona: Persona; accentColor: string }) {
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState<"idle" | "spawning" | "streaming">("idle");
+  const [hydrated, setHydrated] = useState(false);
   const sidRef = useRef<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { sidRef.current = sessionIdFor(persona); }, [persona]);
+  // Hydrate from localStorage on first mount so reloading or navigating
+  // back to /chat/<persona> brings the conversation with it.
+  useEffect(() => {
+    const sid = sessionIdFor(persona);
+    sidRef.current = sid;
+    setBubbles(loadHistory(persona, sid));
+    setHydrated(true);
+  }, [persona]);
+
+  // Persist bubbles whenever they change post-hydration.
+  useEffect(() => {
+    if (!hydrated || !sidRef.current) return;
+    saveHistory(persona, sidRef.current, bubbles);
+  }, [bubbles, hydrated, persona]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -64,11 +108,17 @@ export function ChatRoom({ persona, accentColor }: { persona: Persona; accentCol
     setBusy(true);
     setPhase("spawning");
 
+    // Capture the conversation up to (but not including) the new message so
+    // the server can pass it to goose as context. We grab from the current
+    // bubbles array; the new user bubble was appended above but we want
+    // *prior* turns only.
+    const priorTurns = asTurns(bubbles);
+
     try {
       const res = await fetch(`/api/chat/${persona}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ sessionId: sidRef.current, message }),
+        body: JSON.stringify({ sessionId: sidRef.current, message, history: priorTurns }),
       });
       if (!res.ok || !res.body) {
         const text = await res.text().catch(() => res.statusText);
@@ -184,6 +234,7 @@ export function ChatRoom({ persona, accentColor }: { persona: Persona; accentCol
             variant="ghost"
             disabled={busy}
             onClick={() => {
+              clearHistory(persona, sidRef.current);
               sidRef.current = newSessionFor(persona);
               setBubbles([]);
             }}
