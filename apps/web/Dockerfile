@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # below get hand-pulled).
 COPY --from=builder --chown=app:app /app/.next/standalone ./
 COPY --from=builder --chown=app:app /app/.next/static ./.next/static
-COPY --from=builder --chown=app:app /app/public ./public
+# (no public/ dir in this project — skip copying it)
 
 # better-sqlite3 is server-external, so the standalone bundle doesn't
 # include it. Hand-copy the prebuild + its top-level dep.

@@ -7,7 +7,7 @@ app = "gloop-liam-gateway"
 primary_region = "lax"
 
 [build]
-  dockerfile = "apps/gateway/Dockerfile"
+  dockerfile = "../apps/gateway/Dockerfile"
 
 # Bind-mount target for the merged virtual-tool registry so /registry
 # edits from the web app land somewhere stable across deploys. The web

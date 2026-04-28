@@ -8,7 +8,7 @@ app = "gloop-liam-research-mcp"
 primary_region = "lax"
 
 [build]
-  dockerfile = "apps/research-mcp-bundle/Dockerfile"
+  dockerfile = "../apps/research-mcp-bundle/Dockerfile"
 
 [[mounts]]
   source = "research_data"

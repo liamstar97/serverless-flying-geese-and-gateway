@@ -4,7 +4,7 @@ app = "gloop-liam-web"
 primary_region = "lax"
 
 [build]
-  dockerfile = "apps/web/Dockerfile"
+  dockerfile = "../apps/web/Dockerfile"
 
 # Bind-mount the same registry volume as the gateway so /registry writes
 # go to one truth. Local sessions.db + persona files also live here so

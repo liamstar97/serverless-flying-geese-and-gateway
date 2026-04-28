@@ -4,7 +4,7 @@ app = "gloop-liam-ecommerce-mcp"
 primary_region = "lax"
 
 [build]
-  dockerfile = "apps/ecommerce-mcp-bundle/Dockerfile"
+  dockerfile = "../apps/ecommerce-mcp-bundle/Dockerfile"
 
 [[mounts]]
   source = "ecommerce_data"
