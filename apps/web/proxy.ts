@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 
-const PROTECTED = ["/chat", "/personas", "/registry", "/tools"];
+const PROTECTED = ["/chat", "/personas", "/registry", "/tools", "/admin"];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
@@ -12,5 +12,11 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/chat/:path*", "/personas/:path*", "/registry/:path*", "/tools/:path*"],
+  matcher: [
+    "/chat/:path*",
+    "/personas/:path*",
+    "/registry/:path*",
+    "/tools/:path*",
+    "/admin/:path*",
+  ],
 };

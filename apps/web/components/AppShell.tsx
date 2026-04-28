@@ -62,6 +62,15 @@ export async function AppShell({ children }: { children: ReactNode }) {
             <span className="text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70">↗</span>
             Inspect gateway
           </a>
+          {(session?.user as { isAdmin?: boolean } | undefined)?.isAdmin && (
+            <Link
+              href="/admin/users"
+              className="group flex items-center gap-3 rounded-md px-3 py-1.5 text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            >
+              <span className="text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70">⌗</span>
+              Users
+            </Link>
+          )}
         </nav>
 
         {personas.length > 0 && (
