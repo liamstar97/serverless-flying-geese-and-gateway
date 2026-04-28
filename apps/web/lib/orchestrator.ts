@@ -9,6 +9,8 @@
 
 import { spawn } from "node:child_process";
 
+import fs from "node:fs";
+
 import type { Persona } from "./personas";
 import { findSession, touchSession, upsertSession, deleteSession, listSessionsByUser } from "./sessions";
 import { startSweeperOnce } from "./sweeper";
@@ -197,6 +199,17 @@ async function flySpawn(
   // gets its own volume that we sync from the web app on every recipe save.
   // (TODO: replace with a tiny shared object store / Tigris bucket if this
   // sync becomes a bottleneck.)
+  // Pass the latest recipe content via env so the spawned machine uses
+  // whatever the user just saved in /personas/[id], not the baked-in
+  // copy from the goose-runner image. Volume sharing across apps would
+  // be the alternative but Fly volumes are app-scoped.
+  let recipeYaml: string | undefined;
+  try {
+    recipeYaml = fs.readFileSync(recipePath(persona), "utf8");
+  } catch (e) {
+    console.warn(`[orch.fly] couldn't read recipe yaml for ${persona}: ${(e as Error).message}`);
+  }
+
   const machine = await flyApi<FlyMachine>(
     "POST",
     `/v1/apps/${FLY_GOOSE_APP}/machines`,
@@ -213,6 +226,7 @@ async function flySpawn(
           GOOSE_MODEL: "claude-sonnet-4-6",
           GOOSE_RECIPE: persona,
           GATEWAY_URL: GATEWAY_URL_INTERNAL,
+          ...(recipeYaml ? { GOOSE_RECIPE_YAML: recipeYaml } : {}),
         },
         services: [
           {

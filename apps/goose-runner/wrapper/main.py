@@ -39,30 +39,57 @@ GATEWAY_URL = os.environ.get("GATEWAY_URL", "http://gateway:3000").rstrip("/")
 MCP_URL = f"{GATEWAY_URL}/mcp"
 
 
+def _rewrite_extensions(data: dict) -> dict:
+    for ext in data.get("extensions") or []:
+        if ext.get("type") == "streamable_http":
+            ext["uri"] = MCP_URL
+    return data
+
+
 def _materialize_recipes() -> None:
-    """Copy each recipe from /etc/goose-recipes/ to /tmp/, rewriting the
-    first streamable_http extension's `uri` to point at the live gateway.
-    Called once at module load.
+    """Resolve the runtime recipe set, rewriting gateway URIs to the live
+    GATEWAY_URL.
+
+    Source priority:
+      1. GOOSE_RECIPE_YAML env (live content the orchestrator pushed in;
+         this is what /personas/[id] saves go through on Fly)
+      2. /etc/goose-recipes/<persona>.yaml (image-baked default)
+
+    The runtime persona lives in GOOSE_RECIPE; we materialize *just* that
+    one when env-content is provided, plus all of the image-baked ones as
+    safe fallbacks for any other persona that might be requested.
     """
-    src = Path(SRC_RECIPE_DIR)
-    if not src.exists():
-        log.warning("no recipes dir at %s; skipping rewrite", SRC_RECIPE_DIR)
-        return
     Path(RUNTIME_RECIPE_DIR).mkdir(parents=True, exist_ok=True)
+    persona = os.environ.get("GOOSE_RECIPE", "research")
     rewritten = 0
-    for path in src.glob("*.yaml"):
+
+    # 1) Live content from the orchestrator, if any.
+    yaml_text = os.environ.get("GOOSE_RECIPE_YAML", "").strip()
+    if yaml_text:
         try:
-            data = yaml.safe_load(path.read_text())
-            for ext in data.get("extensions") or []:
-                if ext.get("type") == "streamable_http":
-                    ext["uri"] = MCP_URL
-            dst = Path(RUNTIME_RECIPE_DIR) / path.name
-            dst.write_text(yaml.safe_dump(data, sort_keys=False))
+            data = _rewrite_extensions(yaml.safe_load(yaml_text))
+            (Path(RUNTIME_RECIPE_DIR) / f"{persona}.yaml").write_text(
+                yaml.safe_dump(data, sort_keys=False),
+            )
+            log.info("materialized recipe for %s from GOOSE_RECIPE_YAML (%d bytes)", persona, len(yaml_text))
             rewritten += 1
-        except Exception as e:
-            log.exception("failed to rewrite %s: %s", path, e)
-            # Fall back to verbatim copy so the recipe at least loads.
-            shutil.copy2(path, Path(RUNTIME_RECIPE_DIR) / path.name)
+        except Exception:
+            log.exception("failed to parse GOOSE_RECIPE_YAML; falling back to baked default")
+
+    # 2) Image-baked defaults — copy any we don't already have a runtime version of.
+    src = Path(SRC_RECIPE_DIR)
+    if src.exists():
+        for path in src.glob("*.yaml"):
+            dst = Path(RUNTIME_RECIPE_DIR) / path.name
+            if dst.exists():
+                continue
+            try:
+                data = _rewrite_extensions(yaml.safe_load(path.read_text()))
+                dst.write_text(yaml.safe_dump(data, sort_keys=False))
+                rewritten += 1
+            except Exception as e:
+                log.exception("failed to rewrite %s: %s", path, e)
+                shutil.copy2(path, dst)
     log.info("materialized %d recipe(s) at %s with gateway=%s", rewritten, RUNTIME_RECIPE_DIR, MCP_URL)
 
 

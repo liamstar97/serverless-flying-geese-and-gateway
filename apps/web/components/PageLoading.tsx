@@ -24,6 +24,13 @@ export function PageLoading({
         )}
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">{title}</h1>
         {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+        <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="relative flex size-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+            <span className="relative inline-flex size-2 rounded-full bg-primary" />
+          </span>
+          Waking machines from idle — first request after a long pause can take 5–15 s.
+        </div>
       </div>
 
       {variant === "list" && (

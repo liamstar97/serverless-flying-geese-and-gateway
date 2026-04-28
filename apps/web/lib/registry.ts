@@ -108,10 +108,38 @@ export function readRegistryText(): string {
 
 export function writeRegistry(reg: Registry): void {
   fs.writeFileSync(DATA_PATHS.registry, JSON.stringify(reg, null, 2), "utf8");
+  void pushToGateway(reg);
 }
 
 export function writeRegistryText(text: string): void {
   // Validate JSON before writing.
-  JSON.parse(text);
+  const parsed = JSON.parse(text);
   fs.writeFileSync(DATA_PATHS.registry, text, "utf8");
+  void pushToGateway(parsed);
+}
+
+/**
+ * Push the registry to the gateway's sync sidecar so its
+ * `refreshInterval` picks it up. Best-effort: a failure here doesn't
+ * fail the user's save (the local copy is the source of truth and we
+ * can re-push later).
+ */
+async function pushToGateway(reg: Registry): Promise<void> {
+  const url = process.env.GATEWAY_SYNC_URL;
+  const secret = process.env.SYNC_SECRET;
+  if (!url || !secret) return; // local dev: skip
+  try {
+    const res = await fetch(`${url}/registry`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-sync-secret": secret },
+      body: JSON.stringify(reg),
+    });
+    if (!res.ok) {
+      console.warn(`[registry-sync] push failed: ${res.status} ${await res.text()}`);
+    } else {
+      console.log("[registry-sync] pushed to gateway");
+    }
+  } catch (e) {
+    console.warn(`[registry-sync] push errored: ${(e as Error).message}`);
+  }
 }

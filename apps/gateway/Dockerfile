@@ -57,6 +57,7 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 RUN apt-get update && apt-get install -y --no-install-recommends python3 && rm -rf /var/lib/apt/lists/* && \
     mkdir -p /var/registry /opt/registry-defaults
 COPY apps/gateway/merge_registries.py /opt/registry-defaults/merge_registries.py
+COPY apps/gateway/registry_sync.py /usr/local/bin/registry_sync.py
 COPY vendor/agentgatewaygastown/examples/research-assistant-demo/gateway-configs/research_registry.json \
      /opt/registry-defaults/research_registry.json
 COPY vendor/agentgatewaygastown/examples/ecommerce-demo/gateway-configs/ecommerce_registry_v2.json \
@@ -67,5 +68,5 @@ ENV RESEARCH_MCP_HOST=research-mcp-bundle \
     ECOMMERCE_MCP_HOST=ecommerce-mcp-bundle \
     ADMIN_ADDR=0.0.0.0:15000
 
-EXPOSE 3000 15000
+EXPOSE 3000 15000 15001
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

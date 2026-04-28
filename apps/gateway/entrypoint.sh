@@ -10,10 +10,14 @@ if [ ! -f /var/registry/registry.json ]; then
         /var/registry/registry.json
 fi
 
-# Substitute hostnames into the gateway config so the same image works for
-# docker-compose (uses service names) and Fly (uses *.internal DNS).
+# Substitute hostnames into the gateway config.
 envsubst '$RESEARCH_MCP_HOST $ECOMMERCE_MCP_HOST' \
     < /etc/agentgateway/config.yaml.tmpl \
     > /etc/agentgateway/config.yaml
+
+# Run the registry-sync sidecar in the background. It accepts POSTs from
+# the web app's /registry editor and writes /var/registry/registry.json
+# atomically; agentgateway's `refreshInterval` then picks up the change.
+python3 /usr/local/bin/registry_sync.py &
 
 exec /usr/local/bin/agentgateway -f /etc/agentgateway/config.yaml
