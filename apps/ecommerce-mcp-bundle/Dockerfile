@@ -36,6 +36,7 @@ RUN uv venv && \
 # /app/data → /data (volume) so upstream's relative `data/` lookups land there.
 RUN rm -rf /app/data && ln -s /data /app/data
 
+COPY apps/ecommerce-mcp-bundle/extra_seed.py /app/scripts/extra_seed.py
 COPY apps/ecommerce-mcp-bundle/supervisord.conf /etc/supervisor/conf.d/services.conf
 COPY apps/ecommerce-mcp-bundle/start.sh /start.sh
 RUN chmod +x /start.sh
