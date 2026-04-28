@@ -65,14 +65,24 @@ export default async function ToolsPage() {
             {tools.length > 0 && <> Exposing {tools.length} tools across {ordered.length} buckets.</>}
           </p>
         </div>
-        <Link
-          href={process.env.GATEWAY_ADMIN_URL ?? "http://localhost:15000/ui"}
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-md border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-        >
-          gateway UI ↗
-        </Link>
+        {(() => {
+          // Only show the link when the URL is browser-routable. On Fly the
+          // admin port is on the private 6PN (gloop-liam-gateway.internal:
+          // 15000) which browsers can't resolve. Locally
+          // http://localhost:15000/ui works directly.
+          const url = process.env.GATEWAY_ADMIN_URL ?? "http://localhost:15000/ui";
+          if (url.includes(".internal")) return null;
+          return (
+            <Link
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-md border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              gateway UI ↗
+            </Link>
+          );
+        })()}
       </div>
 
       {error && (
