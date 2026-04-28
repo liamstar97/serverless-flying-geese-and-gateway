@@ -16,6 +16,7 @@ import { findSession, touchSession, upsertSession, deleteSession, listSessionsBy
 import { startSweeperOnce } from "./sweeper";
 import { DOCKER_MOUNTS } from "./data-paths";
 import { recipePath, getPersona } from "./persona-store";
+import { wakeApp } from "./fly";
 
 const LOCAL = process.env.LOCAL_GOOSE !== "0";
 const NETWORK = process.env.GOOSE_DOCKER_NETWORK ?? "gloop";
@@ -25,6 +26,9 @@ const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY ?? "";
 const FLY_API = process.env.FLY_MACHINES_API ?? "https://api.machines.dev";
 const FLY_TOKEN = process.env.FLY_API_TOKEN ?? "";
 const FLY_GOOSE_APP = process.env.FLY_GOOSE_APP ?? "";
+const FLY_GATEWAY_APP = process.env.FLY_GATEWAY_APP ?? "";
+const FLY_RESEARCH_APP = process.env.FLY_RESEARCH_APP ?? "";
+const FLY_ECOMMERCE_APP = process.env.FLY_ECOMMERCE_APP ?? "";
 const FLY_GOOSE_REGION = process.env.FLY_GOOSE_REGION ?? "sea";
 const FLY_GOOSE_IMAGE = process.env.FLY_GOOSE_IMAGE ?? "";
 const GATEWAY_URL_INTERNAL = process.env.GATEWAY_URL ?? "http://gateway:3000";
@@ -187,6 +191,17 @@ async function flySpawn(
   if (!FLY_GOOSE_APP) throw new Error("FLY_GOOSE_APP not set");
   if (!FLY_GOOSE_IMAGE) throw new Error("FLY_GOOSE_IMAGE not set — fly deploy --build-only and set the digest");
   if (!ANTHROPIC_KEY) throw new Error("ANTHROPIC_API_KEY not set as a Fly secret on the web app");
+
+  // Wake the gateway + MCP bundles before spawning so that the moment goose
+  // boots inside the new machine, *.internal DNS resolves and its
+  // streamable_http extension can actually connect. Without this, goose
+  // sees "no extensions enabled" because the gateway URL is unreachable
+  // when the rest of the stack is scaled to zero.
+  await Promise.allSettled([
+    FLY_GATEWAY_APP ? wakeApp(FLY_GATEWAY_APP) : Promise.resolve(),
+    FLY_RESEARCH_APP ? wakeApp(FLY_RESEARCH_APP) : Promise.resolve(),
+    FLY_ECOMMERCE_APP ? wakeApp(FLY_ECOMMERCE_APP) : Promise.resolve(),
+  ]);
 
   recipePath(persona); // warm the recipe file on the web volume; the goose
                        // machine reads it via the shared volume mount below.
