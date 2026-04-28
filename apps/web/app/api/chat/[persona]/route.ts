@@ -11,7 +11,7 @@ import { z } from "zod";
 import WebSocket from "ws";
 
 import { auth } from "@/auth";
-import { isPersona } from "@/lib/personas";
+import { personaExists } from "@/lib/persona-store";
 import { getOrSpawnGoose } from "@/lib/orchestrator";
 import { touchSession } from "@/lib/sessions";
 
@@ -34,7 +34,7 @@ export async function POST(
   const userId = (session.user as { id?: string }).id ?? session.user.email ?? "anon";
 
   const { persona } = await params;
-  if (!isPersona(persona)) {
+  if (!personaExists(persona)) {
     return new Response(`unknown persona: ${persona}`, { status: 400 });
   }
 

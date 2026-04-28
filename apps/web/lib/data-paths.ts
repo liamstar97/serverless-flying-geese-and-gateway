@@ -11,12 +11,18 @@ const ROOT = process.env.GLOOP_DATA_DIR ?? path.resolve(process.cwd(), "data");
 
 export const DATA_PATHS = {
   root: ROOT,
-  recipesDir: path.join(ROOT, "goose-recipes"),
+  /**
+   * One directory holds both metadata (.json) and recipe (.yaml) for each
+   * persona. Bind-mounted into spawned goose-runners as /etc/goose-recipes:ro,
+   * which only reads the .yaml files — the .json metadata is harmlessly
+   * ignored by goose.
+   */
+  personasDir: path.join(ROOT, "personas"),
   registry: path.join(ROOT, "gateway", "registry.json"),
   sessions: path.join(ROOT, "sessions.db"),
 };
 
 /** Absolute paths for `docker run -v <abs>:<container>` bind mounts. */
 export const DOCKER_MOUNTS = {
-  recipesDir: DATA_PATHS.recipesDir,
+  recipesDir: DATA_PATHS.personasDir,
 };

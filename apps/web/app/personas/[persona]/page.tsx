@@ -2,9 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
-import { isPersona, PERSONA_META } from "@/lib/personas";
+import { getPersona, getAvailableTools, readRecipe } from "@/lib/persona-store";
 import { listGatewayTools } from "@/lib/gateway";
-import { getAvailableTools, readRecipe } from "@/lib/recipes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -21,16 +20,16 @@ export default async function PersonaEditPage({
   if (!session?.user) redirect("/");
 
   const { persona } = await params;
-  if (!isPersona(persona)) notFound();
-  const meta = PERSONA_META[persona];
-  const accent = `var(--${meta.accent})`;
+  const meta = getPersona(persona);
+  if (!meta) notFound();
+  const accent = meta.color;
 
   let allTools: { name: string; description?: string }[] = [];
   let gatewayError: string | null = null;
   try { allTools = await listGatewayTools(); } catch (e) { gatewayError = (e as Error).message; }
 
-  const recipe = readRecipe(persona);
-  const enabled = new Set(getAvailableTools(persona));
+  const recipe = readRecipe(meta.id);
+  const enabled = new Set(getAvailableTools(meta.id));
   const instructions = recipe.instructions ?? "";
 
   return (
@@ -38,7 +37,7 @@ export default async function PersonaEditPage({
       <div className="mb-6 flex items-center gap-3 text-xs text-muted-foreground">
         <Link href="/" className="hover:text-foreground">← personas</Link>
         <span>/</span>
-        <Link href={`/chat/${persona}`} className="hover:text-foreground">{meta.label}</Link>
+        <Link href={`/chat/${meta.id}`} className="hover:text-foreground">{meta.label}</Link>
       </div>
 
       <header
@@ -54,18 +53,15 @@ export default async function PersonaEditPage({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight">{meta.label} recipe</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">{meta.label}</h1>
               <Badge variant="outline" className="border-(--accent) text-(--accent)" style={{ ["--accent" as string]: accent }}>
-                {persona}.yaml
+                {meta.id}.yaml
               </Badge>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Curate which virtual tools this goose persona is allowed to call. Saving recycles
-              any in-flight machine so the next message uses the new recipe.
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{meta.tagline}</p>
           </div>
         </div>
-        <Link href={`/chat/${persona}`}>
+        <Link href={`/chat/${meta.id}`}>
           <Button variant="ghost" size="sm">go to chat →</Button>
         </Link>
       </header>
@@ -77,8 +73,8 @@ export default async function PersonaEditPage({
       )}
 
       <PersonaEditor
-        persona={persona}
-        accentVar={`--${meta.accent}`}
+        persona={meta.id}
+        accentColor={accent}
         allTools={allTools}
         initialEnabled={[...enabled].sort()}
         initialInstructions={instructions}

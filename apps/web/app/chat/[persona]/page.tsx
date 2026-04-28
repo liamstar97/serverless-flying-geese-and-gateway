@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
-import { isPersona, PERSONA_META } from "@/lib/personas";
+import { getPersona } from "@/lib/persona-store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -17,9 +17,9 @@ export default async function ChatPage({
   if (!session?.user) return null;
 
   const { persona } = await params;
-  if (!isPersona(persona)) notFound();
-  const meta = PERSONA_META[persona];
-  const accent = `var(--${meta.accent})`;
+  const meta = getPersona(persona);
+  if (!meta) notFound();
+  const accent = meta.color;
 
   return (
     <div className="mx-auto flex h-svh max-w-4xl flex-col px-6 py-6">
@@ -45,13 +45,13 @@ export default async function ChatPage({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link href={`/personas/${persona}`}>
+          <Link href={`/personas/${meta.id}`}>
             <Button variant="ghost" size="sm">edit recipe</Button>
           </Link>
         </div>
       </header>
 
-      <ChatRoom persona={persona} accentVar={`--${meta.accent}`} />
+      <ChatRoom persona={meta.id} accentColor={accent} />
     </div>
   );
 }

@@ -41,7 +41,7 @@ function newSessionFor(persona: Persona): string {
   return v;
 }
 
-export function ChatRoom({ persona, accentVar }: { persona: Persona; accentVar: string }) {
+export function ChatRoom({ persona, accentColor }: { persona: Persona; accentColor: string }) {
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -135,7 +135,7 @@ export function ChatRoom({ persona, accentVar }: { persona: Persona; accentVar: 
   }, [busy, draft, persona]);
 
   return (
-    <div className="flex flex-1 flex-col gap-3 overflow-hidden" style={{ ["--accent" as string]: `var(${accentVar})` }}>
+    <div className="flex flex-1 flex-col gap-3 overflow-hidden" style={{ ["--accent" as string]: accentColor }}>
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto rounded-2xl border bg-card/40"

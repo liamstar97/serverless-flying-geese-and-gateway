@@ -13,7 +13,7 @@ import type { Persona } from "./personas";
 import { findSession, touchSession, upsertSession, deleteSession, listSessionsByUser } from "./sessions";
 import { startSweeperOnce } from "./sweeper";
 import { DOCKER_MOUNTS } from "./data-paths";
-import { recipePath } from "./recipes";
+import { recipePath } from "./persona-store";
 
 const LOCAL = process.env.LOCAL_GOOSE === "1";
 const NETWORK = process.env.GOOSE_DOCKER_NETWORK ?? "gloop";

@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { auth, signOut } from "@/auth";
-import { PERSONAS, PERSONA_META } from "@/lib/personas";
+import { listPersonas } from "@/lib/persona-store";
 import { listSessionsByUser } from "@/lib/sessions";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -22,6 +22,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
   if (userId) {
     for (const row of listSessionsByUser(userId)) liveByPersona.set(row.persona, true);
   }
+  const personas = session?.user ? listPersonas() : [];
 
   return (
     <div className="flex min-h-svh">
@@ -58,38 +59,40 @@ export async function AppShell({ children }: { children: ReactNode }) {
           </a>
         </nav>
 
-        <Separator className="mx-3 my-3 bg-sidebar-border" />
-
-        <div className="px-3 text-xs uppercase tracking-wider text-sidebar-foreground/40">Personas</div>
-        <nav className="mt-1 flex flex-col gap-0.5 px-3 text-sm">
-          {PERSONAS.map((p) => {
-            const meta = PERSONA_META[p];
-            const live = liveByPersona.get(p) ?? false;
-            return (
-              <Link
-                key={p}
-                href={`/chat/${p}`}
-                className="group flex items-center justify-between gap-3 rounded-md px-3 py-1.5 text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              >
-                <span className="flex items-center gap-3">
-                  <span className={cn("text-base text-(--accent)")} style={{ "--accent": `var(--${meta.accent})` } as React.CSSProperties}>
-                    {meta.glyph}
-                  </span>
-                  {meta.label}
-                </span>
-                <span
-                  aria-hidden
-                  title={live ? "machine warm" : "no machine"}
-                  className={cn(
-                    "h-1.5 w-1.5 rounded-full",
-                    live ? "gloop-pulse" : "bg-sidebar-foreground/20",
-                  )}
-                  style={live ? { background: `var(--${meta.accent})`, color: `var(--${meta.accent})` } : undefined}
-                />
+        {personas.length > 0 && (
+          <>
+            <Separator className="mx-3 my-3 bg-sidebar-border" />
+            <div className="flex items-center justify-between px-3 text-xs uppercase tracking-wider text-sidebar-foreground/40">
+              <span>Personas</span>
+              <Link href="/personas/new" className="text-sidebar-foreground/40 hover:text-sidebar-foreground" aria-label="New persona">
+                +
               </Link>
-            );
-          })}
-        </nav>
+            </div>
+            <nav className="mt-1 flex max-h-[40svh] flex-col gap-0.5 overflow-y-auto px-3 text-sm">
+              {personas.map((p) => {
+                const live = liveByPersona.get(p.id) ?? false;
+                return (
+                  <Link
+                    key={p.id}
+                    href={`/chat/${p.id}`}
+                    className="group flex items-center justify-between gap-3 rounded-md px-3 py-1.5 text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      <span className="text-base" style={{ color: p.color }}>{p.glyph}</span>
+                      <span className="truncate">{p.label}</span>
+                    </span>
+                    <span
+                      aria-hidden
+                      title={live ? "machine warm" : "no machine"}
+                      className={cn("h-1.5 w-1.5 shrink-0 rounded-full", live ? "gloop-pulse" : "bg-sidebar-foreground/20")}
+                      style={live ? { background: p.color, color: p.color } : undefined}
+                    />
+                  </Link>
+                );
+              })}
+            </nav>
+          </>
+        )}
 
         <div className="mt-auto px-3 py-3 text-xs">
           {session?.user ? (

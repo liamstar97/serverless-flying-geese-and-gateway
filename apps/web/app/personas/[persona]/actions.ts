@@ -1,18 +1,19 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { auth } from "@/auth";
-import { isPersona, type Persona } from "@/lib/personas";
-import { readRecipe, writeRecipe } from "@/lib/recipes";
+import { personaExists, readRecipe, writeRecipe, deletePersona } from "@/lib/persona-store";
 import { recyclePersonaMachines } from "@/lib/orchestrator";
 
 export async function savePersonaAction(input: {
-  persona: Persona;
+  persona: string;
   tools: string[];
   instructions: string;
 }): Promise<{ ok?: true; warm?: number; error?: string }> {
   const session = await auth();
   if (!session?.user) return { error: "not signed in" };
-  if (!isPersona(input.persona)) return { error: "unknown persona" };
+  if (!personaExists(input.persona)) return { error: "unknown persona" };
 
   const userId = (session.user as { id?: string }).id ?? session.user.email ?? "anon";
 
@@ -28,7 +29,28 @@ export async function savePersonaAction(input: {
     writeRecipe(input.persona, recipe);
 
     const warm = await recyclePersonaMachines(userId, input.persona);
+    revalidatePath("/");
+    revalidatePath(`/chat/${input.persona}`);
     return { ok: true, warm };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+export async function deletePersonaAction(input: {
+  persona: string;
+}): Promise<{ ok?: true; error?: string }> {
+  const session = await auth();
+  if (!session?.user) return { error: "not signed in" };
+  if (!personaExists(input.persona)) return { error: "unknown persona" };
+
+  const userId = (session.user as { id?: string }).id ?? session.user.email ?? "anon";
+
+  try {
+    await recyclePersonaMachines(userId, input.persona);
+    deletePersona(input.persona);
+    revalidatePath("/");
+    return { ok: true };
   } catch (e) {
     return { error: (e as Error).message };
   }

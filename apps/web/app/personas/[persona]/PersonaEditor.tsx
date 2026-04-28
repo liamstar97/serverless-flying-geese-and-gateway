@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-import { savePersonaAction } from "./actions";
+import { savePersonaAction, deletePersonaAction } from "./actions";
 
 interface Tool { name: string; description?: string }
 
@@ -28,13 +28,13 @@ function bucket(name: string): string {
 
 export function PersonaEditor({
   persona,
-  accentVar,
+  accentColor,
   allTools,
   initialEnabled,
   initialInstructions,
 }: {
   persona: Persona;
-  accentVar: string;
+  accentColor: string;
   allTools: Tool[];
   initialEnabled: string[];
   initialInstructions: string;
@@ -102,7 +102,7 @@ export function PersonaEditor({
     });
   };
 
-  const accent = `var(${accentVar})`;
+  const accent = accentColor;
 
   return (
     <div className="grid gap-5 md:grid-cols-[1fr,360px]">
@@ -239,6 +239,28 @@ export function PersonaEditor({
           Any in-flight goose machine for this persona is stopped — the next message respawns
           with the new recipe.
         </p>
+
+        <Separator />
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="self-start text-destructive hover:text-destructive"
+          disabled={pending}
+          onClick={() => {
+            if (!confirm(`Delete persona "${persona}"? This removes the recipe + metadata and stops any in-flight machines. The 3 seed personas can be recreated by deleting data/personas/.`)) return;
+            startTransition(async () => {
+              const res = await deletePersonaAction({ persona });
+              if (res?.error) toast.error(res.error);
+              else {
+                toast.success("persona deleted");
+                window.location.href = "/";
+              }
+            });
+          }}
+        >
+          delete persona
+        </Button>
       </aside>
     </div>
   );
