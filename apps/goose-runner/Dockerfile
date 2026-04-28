@@ -35,5 +35,8 @@ ENV GOOSE_RECIPE=research \
 EXPOSE 8000
 
 USER 1000
+# Bind to "::" so uvicorn accepts both IPv4 (Docker on macOS) and IPv6
+# (Fly's 6PN). With "0.0.0.0" the machine ECONNREFUSES on its private
+# v6 IP, which is the only thing other Fly machines can reach.
 ENTRYPOINT ["/opt/wrapper-venv/bin/python", "-m", "uvicorn", "main:app", \
-            "--app-dir", "/opt/wrapper", "--host", "0.0.0.0", "--port", "8000"]
+            "--app-dir", "/opt/wrapper", "--host", "::", "--port", "8000"]

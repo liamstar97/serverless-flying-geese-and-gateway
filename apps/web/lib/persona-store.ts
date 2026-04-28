@@ -33,7 +33,12 @@ export {
   slugify,
 } from "./persona-types";
 
-const DEFAULT_RECIPES_DIR = path.resolve(process.cwd(), "..", "goose-runner", "recipes");
+// Where to copy the default per-persona recipe YAML from when seeding the
+// data Volume on first read. In dev we run from apps/web so cwd/.. is
+// apps/, then goose-runner/recipes lives next door. In production the web
+// Docker image copies them to /app/seeds/recipes and exports the env var.
+const DEFAULT_RECIPES_DIR = process.env.GLOOP_DEFAULT_RECIPES_DIR
+  ?? path.resolve(process.cwd(), "..", "goose-runner", "recipes");
 
 const SEED: PersonaConfig[] = [
   {
