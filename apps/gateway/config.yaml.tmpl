@@ -5,8 +5,10 @@
 # in docker-compose (service-name DNS) and on Fly (*.internal DNS).
 
 registry:
-  source: file:///etc/agentgateway/registry.json
-  refreshInterval: 30s
+  # Bind-mounted from the web app's data/ — edits via the /registry UI land
+  # here and the gateway picks them up within refreshInterval.
+  source: file:///var/registry/registry.json
+  refreshInterval: 10s
 
 binds:
   - port: 3000

@@ -56,9 +56,16 @@ services:
     environment:
       RESEARCH_MCP_HOST: research-mcp-bundle
       ECOMMERCE_MCP_HOST: ecommerce-mcp-bundle
+      ADMIN_ADDR: 0.0.0.0:15000
       RUST_LOG: info
+    volumes:
+      # Live registry — written by the web app's /registry editor, read by
+      # the gateway on a 10s refresh interval. Seeded by entrypoint.sh on
+      # first boot when the host dir is empty.
+      - ./apps/web/data/gateway:/var/registry
     ports:
       - "3000:3000"
+      - "15000:15000"  # gateway admin UI: http://localhost:15000/ui
     depends_on:
       - research-mcp-bundle
       - ecommerce-mcp-bundle

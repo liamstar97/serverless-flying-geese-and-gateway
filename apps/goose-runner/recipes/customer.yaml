@@ -1,0 +1,40 @@
+version: "1.0.0"
+title: "Customer Goose"
+description: "Shopping assistant scoped to customer-facing virtual tools on agentgateway."
+
+parameters:
+  - key: user_message
+    input_type: string
+    requirement: required
+    description: "The user's chat message for this turn"
+
+prompt: "{{ user_message }}"
+
+instructions: |
+  You are a friendly shopping assistant. Help the user discover products,
+  manage their cart, and place orders. Use semantic search when their query
+  is fuzzy. Always confirm before clearing the cart or checking out.
+
+  Prefer the personalized variants when the user has expressed preferences.
+
+extensions:
+  - type: streamable_http
+    name: agentgateway
+    uri: http://gateway:3000/mcp
+    timeout: 60
+    description: "Customer-facing ecommerce virtual tools merged on agentgateway"
+    available_tools:
+      - virtual_search_products
+      - virtual_personalized_search
+      - virtual_browse_products
+      - virtual_get_categories
+      - virtual_get_product_details
+      - virtual_product_with_availability
+      - virtual_view_cart
+      - virtual_add_to_cart
+      - virtual_update_cart_item
+      - virtual_remove_from_cart
+      - virtual_clear_cart
+      - virtual_checkout
+      - virtual_list_orders
+      - virtual_get_order

@@ -1,7 +1,11 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
 import { isPersona, PERSONA_META } from "@/lib/personas";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
 import { ChatRoom } from "./ChatRoom";
 
 export default async function ChatPage({
@@ -10,20 +14,44 @@ export default async function ChatPage({
   params: Promise<{ persona: string }>;
 }) {
   const session = await auth();
-  if (!session?.user) {
-    return null; // middleware redirects, but defense-in-depth
-  }
+  if (!session?.user) return null;
+
   const { persona } = await params;
   if (!isPersona(persona)) notFound();
+  const meta = PERSONA_META[persona];
+  const accent = `var(--${meta.accent})`;
 
   return (
-    <main style={{ maxWidth: 980, margin: "0 auto", padding: "2rem 1.5rem", height: "100vh", display: "flex", flexDirection: "column" }}>
-      <header style={{ marginBottom: "1rem" }}>
-        <a href="/" style={{ color: "var(--muted)", fontSize: "0.85rem", textDecoration: "none" }}>← personas</a>
-        <h1 style={{ margin: "0.25rem 0" }}>{PERSONA_META[persona].label}</h1>
-        <p style={{ margin: 0, color: "var(--muted)" }}>{PERSONA_META[persona].tagline}</p>
+    <div className="mx-auto flex h-svh max-w-4xl flex-col px-6 py-6">
+      <header
+        className="mb-4 flex items-center justify-between rounded-2xl border bg-card p-4 shadow-sm"
+        style={{ borderColor: accent }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="grid size-10 place-items-center rounded-xl border text-xl"
+            style={{ borderColor: accent, color: accent, background: `color-mix(in oklab, ${accent} 10%, transparent)` }}
+          >
+            {meta.glyph}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold tracking-tight">{meta.label}</h1>
+              <Badge variant="outline" className="border-(--accent) text-(--accent)" style={{ ["--accent" as string]: accent }}>
+                goose
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">{meta.tagline}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href={`/personas/${persona}`}>
+            <Button variant="ghost" size="sm">edit recipe</Button>
+          </Link>
+        </div>
       </header>
-      <ChatRoom persona={persona} />
-    </main>
+
+      <ChatRoom persona={persona} accentVar={`--${meta.accent}`} />
+    </div>
   );
 }

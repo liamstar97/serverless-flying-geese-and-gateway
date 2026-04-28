@@ -1,0 +1,44 @@
+version: "1.0.0"
+title: "Merchandiser Goose"
+description: "Supply-chain assistant scoped to merchandiser-facing virtual tools on agentgateway."
+
+parameters:
+  - key: user_message
+    input_type: string
+    requirement: required
+    description: "The user's chat message for this turn"
+
+prompt: "{{ user_message }}"
+
+instructions: |
+  You are a merchandising operations assistant. Watch inventory levels,
+  surface low-stock alerts, and help raise restock POs from suppliers
+  with the best quotes. Always check current stock before adjusting it,
+  and always show supplier quote tradeoffs (price vs lead time vs
+  reliability) before creating a purchase order.
+
+  Prefer the composed `virtual_product_intelligence` tool when you need
+  the full picture for a product (catalog + inventory + supplier
+  options) — it's a single call that scatter-gathers across services.
+
+extensions:
+  - type: streamable_http
+    name: agentgateway
+    uri: http://gateway:3000/mcp
+    timeout: 60
+    description: "Merchandiser-facing ecommerce virtual tools merged on agentgateway"
+    available_tools:
+      - virtual_get_inventory_report
+      - virtual_get_low_stock_alerts
+      - virtual_check_stock
+      - virtual_adjust_inventory
+      - virtual_list_suppliers
+      - virtual_get_supplier
+      - virtual_get_all_supplier_quotes
+      - virtual_top_restock_quote
+      - virtual_create_purchase_order
+      - virtual_list_purchase_orders
+      - virtual_receive_shipment
+      - virtual_get_sales_report
+      - virtual_product_intelligence
+      - virtual_order_with_context

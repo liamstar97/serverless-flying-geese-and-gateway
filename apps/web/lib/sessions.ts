@@ -92,3 +92,9 @@ export function listIdleSessions(maxAgeMs: number): SessionRow[] {
     .prepare("SELECT * FROM sessions WHERE last_used_at < ?")
     .all(cutoff) as SessionRow[];
 }
+
+export function listSessionsByUser(userId: string): SessionRow[] {
+  return db()
+    .prepare("SELECT * FROM sessions WHERE user_id = ? ORDER BY last_used_at DESC")
+    .all(userId) as SessionRow[];
+}
