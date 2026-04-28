@@ -10,14 +10,28 @@ import { wakeApp } from "./fly";
 
 const GATEWAY = process.env.GATEWAY_INTERNAL_URL ?? "http://localhost:3000";
 const GATEWAY_APP = process.env.FLY_GATEWAY_APP ?? "";
+// The gateway proxies to these bundle apps; each is a separate Fly app
+// with the same scaled-to-zero problem (.internal DNS fails when no
+// machines are running). Wake all three together.
+const RESEARCH_APP = process.env.FLY_RESEARCH_APP ?? "";
+const ECOMMERCE_APP = process.env.FLY_ECOMMERCE_APP ?? "";
+
+async function ensureWarm(app: string): Promise<void> {
+  if (!app) return;
+  try {
+    await wakeApp(app);
+  } catch (e) {
+    console.warn(`[gateway] wake ${app} failed: ${(e as Error).message}`);
+  }
+}
 
 async function ensureGatewayWarm(): Promise<void> {
   if (!GATEWAY_APP) return; // local dev — docker compose handles uptime
-  try {
-    await wakeApp(GATEWAY_APP);
-  } catch (e) {
-    console.warn(`[gateway] wakeApp failed: ${(e as Error).message}`);
-  }
+  await Promise.all([
+    ensureWarm(GATEWAY_APP),
+    ensureWarm(RESEARCH_APP),
+    ensureWarm(ECOMMERCE_APP),
+  ]);
 }
 
 export interface ToolEntry {

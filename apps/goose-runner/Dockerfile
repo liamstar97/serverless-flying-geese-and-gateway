@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV WRAPPER_VENV=/opt/wrapper-venv
 RUN python3 -m venv $WRAPPER_VENV && \
     $WRAPPER_VENV/bin/pip install --no-cache-dir \
-        'fastapi==0.115.*' 'uvicorn[standard]==0.32.*' 'websockets>=12'
+        'fastapi==0.115.*' 'uvicorn[standard]==0.32.*' 'websockets>=12' 'pyyaml>=6'
 
 COPY apps/goose-runner/wrapper/ /opt/wrapper/
 COPY apps/goose-runner/recipes/ /etc/goose-recipes/
