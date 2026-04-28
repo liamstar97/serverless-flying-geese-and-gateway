@@ -33,6 +33,10 @@ RUN uv venv && \
         'beautifulsoup4>=4.12.0' 'starlette>=0.37.0' 'uvicorn>=0.30.0' \
         'python-dotenv>=1.0.0'
 
+# Pre-download the embedding model so cold start doesn't pay the
+# 30-60s HuggingFace download.
+RUN /app/.venv/bin/python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+
 # /data is the volume mount; symlink so the demo's relative `data/` paths land there.
 # (db_utils.get_db_path resolves to <repo>/data; with /app as workdir that's /app/data.)
 RUN rm -rf /app/data && ln -s /data /app/data

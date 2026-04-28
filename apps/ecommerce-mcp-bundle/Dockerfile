@@ -39,6 +39,11 @@ RUN uv venv && \
         'sqlite-vec>=0.1.1' 'httpx>=0.27.0' 'starlette>=0.37.0' \
         'uvicorn>=0.30.0'
 
+# Pre-download the embedding model so cold start doesn't pay the
+# 30-60s HuggingFace download. Adds ~80MB to the image, saves more
+# than that on every fresh-machine spin.
+RUN /app/.venv/bin/python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+
 # /app/data → /data (volume) so upstream's relative `data/` lookups land there.
 RUN rm -rf /app/data && ln -s /data /app/data
 
