@@ -1,0 +1,46 @@
+# agentgateway. Public ports closed — only the web app talks to it,
+# via gloop-liam-gateway.internal:3000. The admin UI on :15000 is
+# proxy'd through the web app's `Inspect gateway` link in production
+# (TODO M5+: optional public route guarded by Auth.js).
+
+app = "gloop-liam-gateway"
+primary_region = "sea"
+
+[build]
+  dockerfile = "apps/gateway/Dockerfile"
+
+# Bind-mount target for the merged virtual-tool registry so /registry
+# edits from the web app land somewhere stable across deploys. The web
+# app and the gateway both mount this volume — it's the *one* place
+# where dynamic gateway state lives.
+[[mounts]]
+  source = "gateway_registry"
+  destination = "/var/registry"
+  initial_size = "1gb"
+
+[env]
+  RESEARCH_MCP_HOST = "gloop-liam-research-mcp.internal"
+  ECOMMERCE_MCP_HOST = "gloop-liam-ecommerce-mcp.internal"
+  ADMIN_ADDR = "0.0.0.0:15000"
+  RUST_LOG = "info"
+
+[[services]]
+  internal_port = 3000
+  protocol = "tcp"
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+# Admin UI — internal-only by default. Comment back the [[services.ports]]
+# block if you want it reachable from outside the org.
+[[services]]
+  internal_port = 15000
+  protocol = "tcp"
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory = "1gb"

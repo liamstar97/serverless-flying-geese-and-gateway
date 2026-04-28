@@ -1,0 +1,58 @@
+# Research MCP services bundled into one app. Internal-only — only the
+# gateway talks to it (via research-mcp-bundle.internal:800X).
+#
+# Deploy: fly deploy -c fly/research-mcp-bundle.fly.toml \
+#                    --dockerfile apps/research-mcp-bundle/Dockerfile
+
+app = "gloop-liam-research-mcp"
+primary_region = "sea"
+
+[build]
+  dockerfile = "apps/research-mcp-bundle/Dockerfile"
+
+[[mounts]]
+  source = "research_data"
+  destination = "/data"
+  initial_size = "1gb"
+
+# Five MCP services bound to 8001-8005. Expose only on the private 6PN —
+# no public reachability needed.
+[[services]]
+  internal_port = 8001
+  protocol = "tcp"
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[services]]
+  internal_port = 8002
+  protocol = "tcp"
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[services]]
+  internal_port = 8003
+  protocol = "tcp"
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[services]]
+  internal_port = 8004
+  protocol = "tcp"
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[services]]
+  internal_port = 8005
+  protocol = "tcp"
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory = "1gb"
