@@ -1,0 +1,50 @@
+# Build context for ALL fly deploys is the repo root, so this affects
+# every Dockerfile. Be conservative — over-excluding breaks builds
+# (e.g. the gateway Dockerfile needs vendor/agentgatewaygastown/crates).
+
+# Node + Next.js
+**/node_modules
+**/.next
+
+# Rust
+**/target
+
+# Submodule's nested build artifacts (the submodule itself stays — its
+# crates/, ui/src, examples/ are all needed by various Dockerfiles)
+vendor/agentgatewaygastown/.git
+vendor/agentgatewaygastown/.github
+vendor/agentgatewaygastown/.beads
+vendor/agentgatewaygastown/.doctrack
+vendor/agentgatewaygastown/architecture
+vendor/agentgatewaygastown/docs
+vendor/agentgatewaygastown/manifests
+vendor/agentgatewaygastown/site
+vendor/agentgatewaygastown/test_files
+vendor/agentgatewaygastown/scripts
+vendor/agentgatewaygastown/test-cli
+vendor/agentgatewaygastown/proto
+vendor/agentgatewaygastown/CHARTER.md
+vendor/agentgatewaygastown/CONTRIBUTION.md
+vendor/agentgatewaygastown/CODE_OF_CONDUCT.md
+vendor/agentgatewaygastown/README.md
+vendor/agentgatewaygastown/CLAUDE.md
+
+# Local data
+data/
+apps/web/data/
+apps/web/.next/
+apps/web/.env
+apps/web/.env.local
+
+# Git
+.git
+.github
+.gitignore
+.gitmodules
+
+# OS / IDE
+.DS_Store
+.vscode
+.idea
+*.swp
+*.log

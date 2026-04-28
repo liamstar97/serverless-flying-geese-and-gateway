@@ -53,26 +53,14 @@ export async function AppShell({ children }: { children: ReactNode }) {
               {n.label}
             </Link>
           ))}
-          {(() => {
-            // Don't surface the link if the URL is only resolvable on Fly's
-            // private 6PN — browsers can't follow .internal hostnames. The
-            // env can be left unset in production until we add a server-
-            // side proxy or expose the admin port publicly.
-            const adminUrl = process.env.GATEWAY_ADMIN_URL ?? "http://localhost:15000/ui";
-            const browserReachable = !adminUrl.includes(".internal");
-            if (!browserReachable) return null;
-            return (
-              <a
-                href={adminUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="group flex items-center gap-3 rounded-md px-3 py-1.5 text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              >
-                <span className="text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70">↗</span>
-                Inspect gateway
-              </a>
-            );
-          })()}
+          {/*
+            Inspect-gateway link is hidden in production: the gateway's
+            admin UI is on a Fly private port (gloop-liam-gateway.internal:
+            15000) which browsers can't resolve. A public server-side
+            proxy at /admin/gateway is on the M5+ todo list. For local
+            dev `http://localhost:15000/ui` works directly — visit it
+            in your browser without a sidebar shortcut.
+          */}
           {(session?.user as { isAdmin?: boolean } | undefined)?.isAdmin && (
             <Link
               href="/admin/users"
