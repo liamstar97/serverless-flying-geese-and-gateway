@@ -25,6 +25,7 @@ import json
 import logging
 import os
 import shutil
+import tempfile
 from pathlib import Path
 
 import yaml
@@ -127,18 +128,30 @@ async def chat(ws: WebSocket) -> None:
                 await ws.send_json({"event": "error", "error": "missing 'message'"})
                 continue
 
-            recipe = _recipe_path()
-            log.info("invoking goose run for recipe=%s text=%r", recipe, text[:80])
+            base_recipe = _recipe_path()
+            log.info("invoking goose run for recipe=%s text-len=%d", base_recipe, len(text))
 
-            # `--recipe` and `--text` are mutually exclusive in goose; instead
-            # the recipe declares a `user_message` parameter and we pass it via
-            # `--params`. subprocess_exec uses execvp, so no shell quoting is
-            # needed — newlines / quotes / backticks pass through verbatim.
+            # Inline the user prompt into a per-turn copy of the recipe.
+            # Earlier we passed it via `--params user_message=<text>` but
+            # goose's params parser silently fails on multi-line VALUE
+            # strings (e.g. the conversation-history prefix the web app
+            # splices in), so the subprocess exited with nothing on stdout
+            # and the chat looked dead. Embedding directly into the recipe's
+            # `prompt` field avoids the params codec entirely.
+            with open(base_recipe, "r", encoding="utf-8") as f:
+                recipe_data = yaml.safe_load(f) or {}
+            recipe_data.pop("parameters", None)
+            recipe_data["prompt"] = text
+            with tempfile.NamedTemporaryFile(
+                "w", encoding="utf-8", suffix=".yaml", delete=False, dir=RUNTIME_RECIPE_DIR,
+            ) as tmp:
+                yaml.safe_dump(recipe_data, tmp, sort_keys=False)
+                tmp_recipe = tmp.name
+
             proc = await asyncio.create_subprocess_exec(
                 "goose", "run",
                 "--no-session",
-                "--recipe", recipe,
-                "--params", f"user_message={text}",
+                "--recipe", tmp_recipe,
                 "--output-format", "stream-json",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
@@ -164,6 +177,10 @@ async def chat(ws: WebSocket) -> None:
             await asyncio.gather(pump_stdout(), pump_stderr())
             rc = await proc.wait()
             await ws.send_json({"event": "done", "exit_code": rc})
+            try:
+                os.unlink(tmp_recipe)
+            except OSError:
+                pass
 
     except WebSocketDisconnect:
         log.info("ws disconnected")
