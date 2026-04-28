@@ -27,6 +27,27 @@ services:
       - "127.0.0.1:8004:8004"
       - "127.0.0.1:8005:8005"
 
+  ecommerce-mcp-bundle:
+    build:
+      context: .
+      dockerfile: apps/ecommerce-mcp-bundle/Dockerfile
+    container_name: ecommerce-mcp-bundle
+    volumes:
+      - ecommerce-data:/data
+    expose:
+      - "8001"
+      - "8002"
+      - "8003"
+      - "8004"
+      - "8005"
+    # Different host port mapping than the research bundle to avoid clashes.
+    ports:
+      - "127.0.0.1:9001:8001"
+      - "127.0.0.1:9002:8002"
+      - "127.0.0.1:9003:8003"
+      - "127.0.0.1:9004:8004"
+      - "127.0.0.1:9005:8005"
+
   gateway:
     build:
       context: .
@@ -34,12 +55,14 @@ services:
     container_name: gateway
     environment:
       RESEARCH_MCP_HOST: research-mcp-bundle
-      ECOMMERCE_MCP_HOST: ecommerce-mcp-bundle  # placeholder until M2
+      ECOMMERCE_MCP_HOST: ecommerce-mcp-bundle
       RUST_LOG: info
     ports:
       - "3000:3000"
     depends_on:
       - research-mcp-bundle
+      - ecommerce-mcp-bundle
 
 volumes:
   research-data:
+  ecommerce-data:

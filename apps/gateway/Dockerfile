@@ -35,10 +35,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=builder /agentgateway /usr/local/bin/agentgateway
 COPY apps/gateway/config.yaml.tmpl /etc/agentgateway/config.yaml.tmpl
-COPY vendor/agentgatewaygastown/examples/research-assistant-demo/gateway-configs/research_registry.json \
-     /etc/agentgateway/research_registry.json
 COPY apps/gateway/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Merge the two upstream virtual-tool registries into one /etc/agentgateway/registry.json
+RUN apt-get update && apt-get install -y --no-install-recommends python3 && rm -rf /var/lib/apt/lists/*
+COPY apps/gateway/merge_registries.py /tmp/merge_registries.py
+COPY vendor/agentgatewaygastown/examples/research-assistant-demo/gateway-configs/research_registry.json \
+     /tmp/research_registry.json
+COPY vendor/agentgatewaygastown/examples/ecommerce-demo/gateway-configs/ecommerce_registry_v2.json \
+     /tmp/ecommerce_registry.json
+RUN python3 /tmp/merge_registries.py /tmp/research_registry.json /tmp/ecommerce_registry.json /etc/agentgateway/registry.json \
+    && rm /tmp/merge_registries.py /tmp/research_registry.json /tmp/ecommerce_registry.json
 
 # Hostnames default to docker-compose service names; override on Fly via env.
 ENV RESEARCH_MCP_HOST=research-mcp-bundle \

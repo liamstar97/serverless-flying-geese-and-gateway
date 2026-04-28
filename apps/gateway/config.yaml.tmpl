@@ -1,11 +1,11 @@
-# Merged gateway config. M1 wires only the research bundle; M2 will add
-# ecommerce backends and merge the second registry.
+# Merged gateway config: routes MCP for both research and ecommerce backends
+# behind a single bind on :3000.
 #
 # Hostnames are env-substituted by entrypoint.sh so this same template works
 # in docker-compose (service-name DNS) and on Fly (*.internal DNS).
 
 registry:
-  source: file:///etc/agentgateway/research_registry.json
+  source: file:///etc/agentgateway/registry.json
   refreshInterval: 30s
 
 binds:
@@ -15,6 +15,7 @@ binds:
           - backends:
               - mcp:
                   targets:
+                    # ----- research bundle -----
                     - name: search-service
                       mcp:
                         host: http://${RESEARCH_MCP_HOST}:8001/mcp
@@ -30,3 +31,20 @@ binds:
                     - name: tag-service
                       mcp:
                         host: http://${RESEARCH_MCP_HOST}:8005/mcp
+
+                    # ----- ecommerce bundle -----
+                    - name: catalog-service
+                      mcp:
+                        host: http://${ECOMMERCE_MCP_HOST}:8001/mcp
+                    - name: cart-service
+                      mcp:
+                        host: http://${ECOMMERCE_MCP_HOST}:8002/mcp
+                    - name: order-service
+                      mcp:
+                        host: http://${ECOMMERCE_MCP_HOST}:8003/mcp
+                    - name: inventory-service
+                      mcp:
+                        host: http://${ECOMMERCE_MCP_HOST}:8004/mcp
+                    - name: supplier-service
+                      mcp:
+                        host: http://${ECOMMERCE_MCP_HOST}:8005/mcp
