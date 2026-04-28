@@ -5,8 +5,11 @@ export default function Loading() {
     <PageLoading
       eyebrow="Live from gateway"
       title="Tools surface"
-      description="Pulling tool list from the gateway. The first request after idle wakes the machine — cold-start can be a few seconds."
+      description="Pulling tool list from the gateway."
       variant="grid"
+      maxWidth="5xl"
+      paddingY="py-12"
+      headerMb="mb-8"
     />
   );
 }

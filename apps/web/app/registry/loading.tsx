@@ -6,7 +6,10 @@ export default function Loading() {
       eyebrow="Live config"
       title="Virtual-tool registry"
       description="Loading the merged registry…"
-      variant="list"
+      variant="split"
+      maxWidth="7xl"
+      paddingY="py-10"
+      headerMb="mb-6"
     />
   );
 }

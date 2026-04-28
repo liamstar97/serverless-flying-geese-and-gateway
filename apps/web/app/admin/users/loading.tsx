@@ -6,6 +6,9 @@ export default function Loading() {
       eyebrow="Admin"
       title="Users"
       variant="list"
+      maxWidth="5xl"
+      paddingY="py-10"
+      headerMb="mb-6"
     />
   );
 }

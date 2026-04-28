@@ -6,6 +6,9 @@ export default function Loading() {
       title="Persona"
       description="Loading recipe + tool surface…"
       variant="grid"
+      maxWidth="5xl"
+      paddingY="py-10"
+      headerMb="mb-6"
     />
   );
 }
