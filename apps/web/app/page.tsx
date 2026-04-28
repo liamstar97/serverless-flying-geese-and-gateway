@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { auth, signIn } from "@/auth";
 import { listPersonas } from "@/lib/persona-store";
 import { listSessionsByUser } from "@/lib/sessions";
+import { isContainerRunning } from "@/lib/orchestrator";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,8 +39,12 @@ export default async function HomePage() {
   }
 
   const userId = (session.user as { id?: string }).id ?? session.user.email ?? "anon";
-  const live = new Map(listSessionsByUser(userId).map((r) => [r.persona, r]));
   const personas = listPersonas();
+  // Verify each session row is backed by an actually-running container so the
+  // cold/warm pill on each card is honest, not just "row exists".
+  const rows = listSessionsByUser(userId);
+  const liveChecks = await Promise.all(rows.map((r) => isContainerRunning(r.container_id)));
+  const live = new Set(rows.filter((_, i) => liveChecks[i]).map((r) => r.persona));
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
@@ -61,6 +66,7 @@ export default async function HomePage() {
       <div className="grid gap-4 md:grid-cols-3">
         {personas.map((p) => {
           const warm = live.has(p.id);
+          // (`live` is a Set<string>; .has() is fine.)
           const accent = p.color;
           return (
             <Card

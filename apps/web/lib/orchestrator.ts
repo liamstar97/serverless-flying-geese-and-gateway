@@ -37,6 +37,9 @@ async function dockerExists(containerId: string): Promise<boolean> {
   return code === 0 && stdout.trim() === "true";
 }
 
+/** Public alias for the live-status API — same check as the spawner uses. */
+export const isContainerRunning = dockerExists;
+
 async function dockerStop(containerId: string): Promise<void> {
   await exec("docker", ["stop", "-t", "2", containerId]);
 }

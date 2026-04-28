@@ -7,11 +7,9 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
+import { JsonEditor } from "@/components/JsonEditor";
 import { cn } from "@/lib/utils";
 
 import { saveToolAction, deleteToolAction } from "./actions";
@@ -199,12 +197,12 @@ export function RegistryEditor({
           </div>
         </div>
 
-        <Textarea
-          value={draft}
-          onChange={(e) => { setDraft(e.target.value); setParseError(null); }}
-          spellCheck={false}
-          className="min-h-0 flex-1 resize-none rounded-none border-0 bg-background/40 font-mono text-[12.5px] leading-relaxed shadow-none focus-visible:ring-0"
-        />
+        <div className="min-h-0 flex-1 overflow-auto bg-background/40">
+          <JsonEditor
+            value={draft}
+            onChange={(v) => { setDraft(v); setParseError(null); }}
+          />
+        </div>
 
         <div className="flex items-center justify-between border-t bg-card px-4 py-2 text-xs">
           {parseError ? (

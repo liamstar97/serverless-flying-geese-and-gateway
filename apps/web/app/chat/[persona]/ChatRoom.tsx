@@ -11,6 +11,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Markdown } from "@/components/Markdown";
 import { cn } from "@/lib/utils";
 
 type Bubble =
@@ -228,8 +229,8 @@ function BubbleView({ b }: { b: Bubble }) {
   }
   if (b.kind === "assistant") {
     return (
-      <div className="mr-12 self-start whitespace-pre-wrap rounded-2xl rounded-bl-md border bg-card px-3.5 py-2 text-sm leading-relaxed">
-        {b.text || <span className="text-muted-foreground">…</span>}
+      <div className="mr-12 self-start rounded-2xl rounded-bl-md border bg-card px-3.5 py-2 text-sm leading-relaxed">
+        {b.text ? <Markdown>{b.text}</Markdown> : <span className="text-muted-foreground">…</span>}
       </div>
     );
   }
