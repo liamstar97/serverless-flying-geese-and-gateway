@@ -22,6 +22,7 @@ primary_region = "lax"
   GATEWAY_URL = "http://gloop-liam-gateway.internal:3000"
   GATEWAY_INTERNAL_URL = "http://gloop-liam-gateway.internal:3000"
   GATEWAY_ADMIN_URL = "http://gloop-liam-gateway.internal:15000/ui"
+  FLY_GATEWAY_APP = "gloop-liam-gateway"
   FLY_GOOSE_APP = "gloop-liam-goose-runner"
   FLY_GOOSE_REGION = "lax"
 
