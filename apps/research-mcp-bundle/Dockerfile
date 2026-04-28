@@ -17,7 +17,10 @@ WORKDIR /app
 # upstream commit.
 COPY vendor/agentgatewaygastown/examples/research-assistant-demo/pyproject.toml ./pyproject.toml
 COPY vendor/agentgatewaygastown/examples/research-assistant-demo/mcp_tools ./mcp_tools
-COPY vendor/agentgatewaygastown/examples/research-assistant-demo/data/seed_data.py ./data/seed_data.py
+# Seed script lives outside /app/data because /app/data becomes a symlink to /data (the volume).
+# Path is /app/scripts/seed_data.py so its sys.path.insert(0, parent.parent) still resolves to /app
+# (which contains mcp_tools/), matching the upstream's data/ layout.
+COPY vendor/agentgatewaygastown/examples/research-assistant-demo/data/seed_data.py /app/scripts/seed_data.py
 
 # Install only the runtime deps actually needed for the MCP services.
 # (We skip google-adk and the rest of the agent stack — those aren't used
@@ -33,6 +36,11 @@ RUN uv venv && \
 # /data is the volume mount; symlink so the demo's relative `data/` paths land there.
 # (db_utils.get_db_path resolves to <repo>/data; with /app as workdir that's /app/data.)
 RUN rm -rf /app/data && ln -s /data /app/data
+
+# Override the demo's http_runner with a patched copy that disables FastMCP's
+# DNS-rebinding protection (the gateway's proxied Host header would otherwise
+# fail the auto-enabled allowed_hosts check).
+COPY apps/research-mcp-bundle/http_runner.py /app/mcp_tools/shared/http_runner.py
 
 COPY apps/research-mcp-bundle/supervisord.conf /etc/supervisor/conf.d/services.conf
 COPY apps/research-mcp-bundle/start.sh /start.sh
